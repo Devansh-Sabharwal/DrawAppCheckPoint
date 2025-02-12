@@ -1,0 +1,2 @@
+export const HTTP_BACKEND = "http://localhost:8000"
+export const WS_URL = "ws://localhost:8080?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjcyZmM1NzI5LWQwNjctNGY1Ni05OWI3LTEyYjZjNGIxMzcyMyIsImlhdCI6MTczOTE2ODAyNH0.PBSB15fT0fhQ61MLSb2uwMYjLn-c9ZmUUuUkVgoul8s"
