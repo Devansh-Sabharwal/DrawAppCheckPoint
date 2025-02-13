@@ -25,7 +25,7 @@ export function RoomCanvas(props: CanvasProps) {
         return () => {
             ws.close();
         };
-    }, [props.roomId]); // ✅ Add dependency array
+    }, []); // ✅ Add dependency array
 
     if (!socket) {
         return <div>Connecting to Server...</div>;
