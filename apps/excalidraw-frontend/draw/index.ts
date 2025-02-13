@@ -5,6 +5,7 @@ interface DrawInitProps{
     canvas:HTMLCanvasElement,
     roomId:string
     socket: WebSocket
+    shape?:string
 }
 type Shape = {
     type:"rect",
@@ -14,12 +15,15 @@ type Shape = {
     height:number,
 }|{
     type:"circle",
-    centerX:number,
-    centerY:number,
-    radius:number
+    x:number,
+    y:number,
+    radiusX:number,
+    radiusY:number,
+    rotation?:number
 }
-export async function drawInit({ctx,canvas,roomId,socket}:DrawInitProps){
+export async function drawInit({ctx,canvas,roomId,socket,shape}:DrawInitProps){
             const existingShapes :Shape[] = await getExistingChats(roomId);
+            const currShape = shape;
 
             socket.onmessage = (event)=>{
                 const message = JSON.parse(event.data);
@@ -43,35 +47,75 @@ export async function drawInit({ctx,canvas,roomId,socket}:DrawInitProps){
                 startY = (e.clientY);
             })
             canvas.addEventListener("mouseup",(e)=>{
+                console.log(currShape);
                 clicked = false;
-                const width = e.clientX-startX;
-                const height = e.clientY-startY;
-                const shape:Shape = {
-                    type:"rect",
-                    x:startX,
-                    y:startY,
-                    width:width,
-                    height:height
+                if(currShape=="rect"){
+                    const width = e.clientX-startX;
+                    const height = e.clientY-startY;
+                    const shape:Shape= {
+                        type:"rect",
+                        x:startX,
+                        y:startY,
+                        width:width,
+                        height:height
+                    }
+                    existingShapes.push(shape)
+                    socket.send(JSON.stringify({
+                        type: "chat",
+                        roomId:roomId,
+                        message: JSON.stringify(shape)  // ✅ Only stringify the shape itself
+                    }));
                 }
-                existingShapes.push(shape)
-                socket.send(JSON.stringify({
-                    type: "chat",
-                    roomId:roomId,
-                    message: JSON.stringify(shape)  // ✅ Only stringify the shape itself
-                }));
+                if(currShape=="circle"){
+                    const radiusX = Math.abs(e.clientX - startX);
+                    const radiusY = Math.abs(e.clientY - startY);
+                    const shape:Shape= {
+                        type:"circle",
+                        x:startX,
+                        y:startY,
+                        radiusX,
+                        radiusY
+                    }
+                    existingShapes.push(shape)
+                    socket.send(JSON.stringify({
+                        type: "chat",
+                        roomId:roomId,
+                        message: JSON.stringify(shape)  // ✅ Only stringify the shape itself
+                    }));
+                }
+                
                 
                 
             })
             canvas.addEventListener("mousemove",(e)=>{
                 if(clicked){
-                    const width = e.clientX-startX;
-                    const height = e.clientY-startY;
-                    clearCanvas(existingShapes,ctx,canvas);
-                    ctx.strokeStyle = "white"
-                    ctx.strokeRect(startX,startY,width,height);
+                    if(currShape=="rect"){
+                        drawRect(startX,startY,e,canvas,ctx,existingShapes);
+                    }
+                    else if(currShape=="circle"){
+                        drawCircle(startX,startY,e,canvas,ctx,existingShapes);
+                    }
                 }
             })
 }
+function drawCircle(startX:number,startY:number,e:MouseEvent,canvas:HTMLCanvasElement,ctx:CanvasRenderingContext2D,existingShapes:Shape[]){
+    const radiusX = Math.abs(e.clientX-startX);
+    const radiusY = Math.abs(e.clientY-startY);
+//<!-- ellipse(x, y, radiusX, radiusY, rotation, startAngle, endAngle) -->
+    clearCanvas(existingShapes,ctx,canvas);
+    ctx.strokeStyle="white";
+    ctx.beginPath();
+    ctx.ellipse(startX,startY,radiusX,radiusY,0,0,2 * Math.PI);
+    ctx.stroke();
+}
+function drawRect(startX:number,startY:number,e:MouseEvent,canvas:HTMLCanvasElement,ctx:CanvasRenderingContext2D,existingShapes:Shape[]){
+    const width = e.clientX-startX;
+    const height = e.clientY-startY;
+    clearCanvas(existingShapes,ctx,canvas);
+    ctx.strokeStyle = "white"
+    ctx.strokeRect(startX,startY,width,height);
+}
+
 function clearCanvas(existingShapes:Shape[],ctx:CanvasRenderingContext2D,canvas:HTMLCanvasElement){
 
     ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -82,6 +126,11 @@ function clearCanvas(existingShapes:Shape[],ctx:CanvasRenderingContext2D,canvas:
         if(shape.type=="rect"){
             ctx.strokeStyle = "white"
             ctx.strokeRect(shape.x,shape.y,shape.width,shape.height);
+        }
+        if(shape.type=="circle"){
+            ctx.beginPath();
+            ctx.ellipse(shape.x, shape.y, shape.radiusX, shape.radiusY, 0, 0, 2 * Math.PI);
+            ctx.stroke();
         }
     })
 }
@@ -97,6 +146,5 @@ async function getExistingChats(roomId: string){
         const messageData = JSON.parse(x.message);
         return messageData;
     })
-    console.log(shapes);
     return shapes
 }
