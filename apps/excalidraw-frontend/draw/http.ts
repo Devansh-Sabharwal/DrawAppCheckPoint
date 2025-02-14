@@ -14,3 +14,13 @@ export async function getExistingChats(roomId: string){
     })
     return shapes
 }
+export async function clearCanvas(roomId: string){
+    const res = await axios.post(`${HTTP_BACKEND}/clear`,
+        { roomId },
+        {
+        headers: {
+            Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjcyZmM1NzI5LWQwNjctNGY1Ni05OWI3LTEyYjZjNGIxMzcyMyIsImlhdCI6MTczOTE2ODAyNH0.PBSB15fT0fhQ61MLSb2uwMYjLn-c9ZmUUuUkVgoul8s` // Set token here
+        }
+        
+    })
+}

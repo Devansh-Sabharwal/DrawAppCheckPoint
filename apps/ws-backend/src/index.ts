@@ -7,7 +7,6 @@ interface User{
     rooms: string[],
     userId: string
 } 
-let test = 0;
 const users:User[] = [];
 const wss = new WebSocketServer({port:8080});
 function checkUser(token:string){
@@ -53,7 +52,6 @@ wss.on('connection',(ws,req)=>{
             user.rooms = user?.rooms.filter(x=>x!==parsedData.roomId)
         }
         if(parsedData.type=="chat"){
-            console.log(++test);
             const roomId = parsedData.roomId;
             const message = parsedData.message;
             try{

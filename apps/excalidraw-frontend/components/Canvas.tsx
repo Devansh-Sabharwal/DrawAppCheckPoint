@@ -1,5 +1,6 @@
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import { Draw } from "@/draw/draw";
+import { clearCanvas } from "@/draw/http";
 
 interface CanvasProps{
     roomId:string
@@ -9,6 +10,7 @@ export function Canvas(props:CanvasProps){
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [shape,setShape] = useState<"circle" | "pencil" | "rect">("rect");
     const [draw,setDraw] = useState<Draw>()
+    const [clear,setClear] = useState(false);
     useEffect(() => {
         const canvas = canvasRef.current;
         if(!canvas ) return;
@@ -42,17 +44,30 @@ export function Canvas(props:CanvasProps){
                 d.destroy();
             }
         }
-    }, [canvasRef]);
+    }, [canvasRef,clear]);
     
     return <div>
-        <canvas ref={canvasRef} className="bg-black" height={window.innerHeight} width={window.innerWidth}></canvas>
-        <Toolbar setShape={setShape}/>
+        <canvas ref={canvasRef} className="bg-[#131213] cursor-crosshair" height={window.innerHeight} width={window.innerWidth}></canvas>
+        <Toolbar setShape={setShape} roomId={props.roomId} setClear={setClear}/>
     </div>
 }
-function Toolbar({setShape}:{setShape:Dispatch<SetStateAction<any>>}){
+function Toolbar(
+    {
+    setShape,
+    roomId,
+    setClear
+
+    }:
+{
+    setShape:Dispatch<SetStateAction<any>>,
+    roomId:string,
+    setClear:Dispatch<SetStateAction<boolean>>
+}
+){
     return <div className="flex gap-4 fixed top-4 left-10">
         <div className="bg-white text-black hover:cursor-pointer" onClick={() => setShape("rect")}>Rect</div>
         <div className="bg-white text-black hover:cursor-pointer" onClick={()=> setShape("circle")}>Circle</div>
-        <div className="bg-white text-black hover:cursor-pointer" onClick={()=> setShape("line")}>Line</div>
+        <div className="bg-white text-black hover:cursor-pointer" onClick={()=> setShape("pencil")}>Pencil</div>
+        <div className="bg-white text-black hover:cursor-pointer" onClick={() =>{ clearCanvas(roomId); setClear(prev=>!prev) }}>Clear</div>
     </div>
 }

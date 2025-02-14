@@ -108,7 +108,6 @@ app.post("/create-room",async (req,res)=>{
     }
 }) 
 app.get('/chats/:roomId',async (req,res)=>{
-    console.log("req aagi");
     const roomId = Number(req.params.roomId);
     const messages = await db.chat.findMany({
         where:{
@@ -129,6 +128,26 @@ app.get("/room/:slug",async (req,res)=>{
         where:{slug}
     });
     res.json({room})
+})
+app.post("/clear",async(req,res)=>{
+    const roomId = Number(req.body.roomId);
+
+
+    if (!roomId || isNaN(roomId)) { 
+        res.status(400).json({ message: "Invalid or missing roomId" });
+        return
+    }
+
+    try{
+        await db.chat.deleteMany({
+            where:{
+                roomId
+            }})
+        res.status(200).json({message:"Canvas Cleared Successfully"});
+    }
+    catch(e){
+        res.status(500).json({message:"DB server error"});
+    }
 })
 app.listen(8000, () => {
     console.log("server is listening");
