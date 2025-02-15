@@ -42,6 +42,7 @@ wss.on('connection',(ws,req)=>{
     }) 
     ws.on('message', async (data)=>{
         const parsedData = JSON.parse(data as unknown as string);
+        // console.log(parsedData.type);
         if(parsedData.type==="join_room"){
             const user = users.find(x=>x.ws === ws);
             user?.rooms.push(parsedData.roomId);
@@ -53,10 +54,12 @@ wss.on('connection',(ws,req)=>{
         }
         if(parsedData.type=="chat"){
             const roomId = parsedData.roomId;
+            const id = parsedData.id;
             const message = parsedData.message;
             try{
                 await db.chat.create({
                     data:{
+                        id,
                         roomId:parseInt(roomId),
                         message,
                         userId
@@ -66,6 +69,7 @@ wss.on('connection',(ws,req)=>{
                     if(user.rooms.includes(roomId)){
                         user.ws.send(JSON.stringify({
                             type:"chat",
+                            id,
                             message:message,
                             roomId
                         }))
@@ -73,6 +77,36 @@ wss.on('connection',(ws,req)=>{
                 })
             }
             catch(e){
+                console.log("An error occured");
+                console.log(e);
+                return;
+            }
+        }
+        else if(parsedData.type=="eraser"){
+            const roomId = parsedData.roomId;
+            const id = parsedData.id;
+            // console.log(id);
+            try{
+                const deleted = await db.chat.deleteMany({
+                    where: {
+                        id,
+                        roomId:parseInt(roomId),
+                    },
+                });
+                if (deleted.count > 0) {
+                    users.forEach(user => {
+                        if (user.rooms.includes(roomId)) {
+                            user.ws.send(
+                                JSON.stringify({
+                                    type: "eraser",
+                                    id,
+                                    roomId,
+                                })
+                            );
+                        }
+                    });
+                }
+            }catch(e){
                 console.log("An error occured");
                 console.log(e);
                 return;

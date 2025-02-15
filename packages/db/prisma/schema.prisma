@@ -30,7 +30,7 @@ model Room{
   chats Chat[]
 }
 model Chat{
-  id Int @id @default(autoincrement())
+  id String @id 
   roomId Int
   message String
   userId  String
